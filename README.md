@@ -5,6 +5,7 @@
 + Dynamic Scene
 + Decal System
 + Tiled Background
++ Paint Geometry
 
 
 ## License

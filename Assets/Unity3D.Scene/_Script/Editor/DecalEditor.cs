@@ -4,7 +4,7 @@ using UnityEditor;
 namespace scene
 {
 	[CustomEditor(typeof(Decal))]
-	public class DecalInspector : Editor
+	public class DecalEditor : Editor
 	{
 		SerializedProperty propOffset;
 		SerializedProperty propSprite;
