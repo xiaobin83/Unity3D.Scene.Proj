@@ -6,6 +6,7 @@ namespace scene
 	public class TiledBackground : MonoBehaviour
 	{
 		public Material material;
+		public bool showGizmos;
 
 		Camera cam;
 		int ID_MainTex;
@@ -181,23 +182,24 @@ namespace scene
 
 				var camMin = camPos - size;
 				var camMax = camPos + size;
-				camMin.x = Mathf.Min(camMin.x, camMax.x);
-				camMin.y = Mathf.Min(camMin.y, camMax.y);
-				camMin.z = Mathf.Min(camMin.z, camMax.z);
-
-				camMax.x = Mathf.Max(camMin.x, camMax.x);
-				camMax.y = Mathf.Max(camMin.y, camMax.y);
-				camMax.z = Mathf.Max(camMin.z, camMax.z);
-
 				var plane = new Plane(transform.up, transform.position);
 				float enter;
 				var r = new Ray(camMin, c.transform.forward);
 				plane.Raycast(r, out enter);
-				wCamMinOnPlane = r.GetPoint(enter);
+				camMin = r.GetPoint(enter);
 				r = new Ray(camMax, c.transform.forward);
 				plane.Raycast(r, out enter);
-				wCamMaxOnPlane = r.GetPoint(enter);
+				camMax = r.GetPoint(enter);
 
+
+				wCamMinOnPlane = new Vector3(
+					Mathf.Min(camMin.x,	camMax.x),
+					Mathf.Min(camMin.y,	camMax.y),
+					Mathf.Min(camMin.z,	camMax.z));
+				wCamMaxOnPlane = new Vector3(
+					Mathf.Max(camMin.x,	camMax.x),
+					Mathf.Max(camMin.y,	camMax.y),
+					Mathf.Max(camMin.z,	camMax.z));
 			}
 			else
 			{
@@ -219,6 +221,16 @@ namespace scene
 			// to local
 			var camMin = transform.InverseTransformPoint(camMinOnPlane);
 			var camMax = transform.InverseTransformPoint(camMaxOnPlane);
+			var min = new Vector3(
+				Mathf.Min(camMin.x, camMax.x),
+				Mathf.Min(camMin.y, camMax.y),
+				Mathf.Min(camMin.z, camMax.z));
+			var max = new Vector3(
+				Mathf.Max(camMin.x, camMax.x),
+				Mathf.Max(camMin.y, camMax.y),
+				Mathf.Max(camMin.z, camMax.z));
+			camMin = min;
+			camMax = max;
 
 			// to grid, using unit quad, so scale is the grid size
 			tileX0 = Mathf.FloorToInt(camMin.x);
@@ -227,23 +239,21 @@ namespace scene
 			tileY1 = Mathf.CeilToInt(camMax.z);
 		}
 
-		void RefreshTiles(int tileX0, int tileY0, int tileX1, int tileY1)
+
+		void RefreshTiles(int tileX0, int tileY0)
 		{
 			Debug.Assert(tileProvider != null);
 
-
-			for (int j = tileY0; j < tileY1; ++j)
+			// TODO: opt
+			for (int j = 0; j < meshTileYCount; ++j)
 			{
-				for (int i = tileX0; i < tileX1; ++i)
+				for (int i = 0; i < meshTileXCount; ++i)
 				{
-					var tile = tileProvider.GetTile(i, j);
-					var xInTile = i - tileX0;
-					var yInTile = j - tileY0;
-					var index = xInTile + yInTile * meshTileYCount;
+					var tile = tileProvider.GetTile(i + tileX0, j + tileY0);
+					var index = i + j * meshTileYCount;
 					materials[index].SetTexture(ID_MainTex, tile);
 				}
 			}
-
 		}
 
 		// update tile
@@ -282,7 +292,7 @@ namespace scene
 						observingTileY0 = tileY0;
 						var p = new Vector3(observingTileX0, 0, observingTileY0);
 						meshObj.transform.localPosition = p;
-						RefreshTiles(tileX0, tileY0, tileX0 + meshTileXCount, tileY0 + meshTileYCount);
+						RefreshTiles(tileX0, tileY0);
 					}
 				}
 			}
@@ -291,17 +301,34 @@ namespace scene
 
 		void OnDrawGizmos()
 		{
-			if (Application.isPlaying)
+			if (showGizmos)
 			{
-				int tileX0, tileY0, tileX1, tileY1;
-				GetTileParams(out tileX0, out tileY0, out tileX1, out tileY1);
-				var gridSize = transform.lossyScale;
-				Gizmos.color = Color.yellow;
-				for (int j = tileY0; j < tileY1; j++)
+				if (Application.isPlaying)
 				{
-					for (int i = tileX0; i < tileX1; i++)
+					var c = cam;
+					if (c == null)
 					{
-						Gizmos.DrawWireCube(new Vector3(gridSize.x * i, 0, gridSize.z * j) + transform.position + gridSize * 0.5f, gridSize);
+						c = Camera.main;
+					}
+					Vector3 camMinOnPlane, camMaxOnPlane;
+					GetProjParams(c, out camMinOnPlane, out camMaxOnPlane);
+					Gizmos.color = Color.red;
+					Gizmos.DrawSphere(camMinOnPlane, 0.2f);
+					Gizmos.color = Color.blue;
+					Gizmos.DrawSphere(camMaxOnPlane, 0.2f);
+
+					int tileX0, tileY0, tileX1, tileY1;
+					GetTileParams(out tileX0, out tileY0, out tileX1, out tileY1);
+					var gridSize = transform.lossyScale;
+					Gizmos.color = Color.yellow;
+					for (int j = tileY0; j < tileY1; j++)
+					{
+						for (int i = tileX0; i < tileX1; i++)
+						{
+							var p = transform.TransformPoint(new Vector3(i + 0.5f, 0, j + 0.5f));
+							var s = transform.TransformVector(Vector3.one);
+							Gizmos.DrawWireCube(p, s);
+						}
 					}
 				}
 			}
