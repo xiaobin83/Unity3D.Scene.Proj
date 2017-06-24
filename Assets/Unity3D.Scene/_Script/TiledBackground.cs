@@ -319,7 +319,6 @@ namespace scene
 
 					int tileX0, tileY0, tileX1, tileY1;
 					GetTileParams(out tileX0, out tileY0, out tileX1, out tileY1);
-					var gridSize = transform.lossyScale;
 					Gizmos.color = Color.yellow;
 					for (int j = tileY0; j < tileY1; j++)
 					{
