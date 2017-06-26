@@ -203,8 +203,13 @@ namespace scene
 			}
 			else
 			{
-				wCamMinOnPlane = Vector3.zero;
-				wCamMaxOnPlane = Vector3.zero;
+				var corners = c.ProjectFrustumOnXZPlane();
+				float minX, maxX, minY, maxY, minZ, maxZ;
+				MUtils.MinMax(out minX, out maxX, corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+				MUtils.MinMax(out minY, out maxY, corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+				MUtils.MinMax(out minZ, out maxZ, corners[0].z, corners[1].z, corners[2].z, corners[3].z);
+				wCamMinOnPlane = new Vector3(minX, minY, minZ);
+				wCamMaxOnPlane = new Vector3(maxX, maxY, maxZ);
 			}
 		}
 
@@ -250,7 +255,7 @@ namespace scene
 				for (int i = 0; i < meshTileXCount; ++i)
 				{
 					var tile = tileProvider.GetTile(i + tileX0, j + tileY0);
-					var index = i + j * meshTileYCount;
+					var index = i + j * meshTileXCount;
 					materials[index].SetTexture(ID_MainTex, tile);
 				}
 			}

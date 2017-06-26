@@ -41,6 +41,23 @@ namespace scene
 			b = t;
 		}
 
+		public static void MinMax(out float min, out float max, float a, float b, params float[] others)
+		{
+			min = Mathf.Min(a, b);
+			max = Mathf.Max(a, b);
+			if (others != null)
+			{
+				for (int i = 0; i < others.Length; ++i)
+				{
+					var f = others[i];
+					if (f < min)
+						min = f;
+					else if (f > max)
+						max = f;
+				}
+			}
+		}
+
 		public static bool Intersects(Plane a, Plane b, out Line line)
 		{
 			Vector3 dir = Vector3.Cross(a.normal, b.normal);
