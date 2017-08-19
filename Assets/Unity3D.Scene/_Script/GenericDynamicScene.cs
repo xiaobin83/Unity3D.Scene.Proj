@@ -30,11 +30,7 @@ namespace scene
 		public float minCellSize = 10f;
 		public float loose = 0.2f;
 
-		public static GenericDynamicScene current;
-
 		GenericQuadTree<NodeAction> tree;
-
-		public System.Action OnCamIntersectedNodesChanged;
 
 		void CheckCreate()
 		{
@@ -44,16 +40,11 @@ namespace scene
 			}
 		}
 
-		void Awake()
+		protected virtual void Awake()
 		{
-			current = this;
 			CheckCreate();
 		}
 
-		void OnDestroy()
-		{
-			current = null;
-		}
 
 		float nextCheckTime = 0;
 		public float nextCheckDur = 1f;
@@ -108,11 +99,6 @@ namespace scene
 				}
 
 				prev = cur;
-
-				if (cur.Count != exceptNumBefore && OnCamIntersectedNodesChanged != null)
-				{
-					OnCamIntersectedNodesChanged();
-				}
 			}
 		}
 

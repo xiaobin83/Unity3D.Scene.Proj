@@ -38,20 +38,11 @@ public class MyTiledProvider : MonoBehaviour, scene.TiledBackground.TileProvider
 		return allTiles[index];
 	}
 
-
-	public Texture[] GetAllTiles(out int tileX0, out int tileY0, out int tileX1, out int tileY1)
+	public void GetAllTiles(out int tileX0, out int tileY0, out int tileX1, out int tileY1)
 	{
 		tileX0 = 0;
 		tileY0 = 0;
 		tileX1 = 4;
 		tileY1 = 6;
-		for (int j = tileY0; j < tileY1; ++j)
-		{
-			for (int i = tileX0; i < tileX1; ++i)
-			{
-				GetTile(i, j);
-			}
-		}
-		return allTiles;
-	}
+    }
 }

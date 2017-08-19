@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-
 namespace scene
 {
 	public class TiledBackground : MonoBehaviour
@@ -15,7 +14,7 @@ namespace scene
 		{
 			bool showAllTiles { get; }
 			Texture GetTile(int tileX, int tileY);
-			Texture[] GetAllTiles(out int tileX0, out int tileY0, out int tileX1, out int tileY1);
+			void GetAllTiles(out int tileX0, out int tileY0, out int tileX1, out int tileY1);
 		}
 
 		public void SetCamera(Camera camera)
@@ -79,7 +78,8 @@ namespace scene
 			return mesh;
 		}
 
-		GameObject allTilesMeshObj;
+		[HideInInspector][System.NonSerialized]
+		public GameObject allTilesMeshObj;
 		void CreateAllTiles()
 		{
 			if (tileProvider != null)
@@ -90,30 +90,31 @@ namespace scene
 				}
 
 				int tileX0, tileY0, tileX1, tileY1;
-				var textures = tileProvider.GetAllTiles(out tileX0, out tileY0, out tileX1, out tileY1);
+				tileProvider.GetAllTiles(out tileX0, out tileY0, out tileX1, out tileY1);
 
 				allTilesMeshObj = new GameObject("All Tiles Mesh Object");
-				allTilesMeshObj.hideFlags = HideFlags.DontSave;
 				allTilesMeshObj.transform.SetParent(transform, false);
 
 				var xcount = tileX1 - tileX0;
 				var ycount = tileY1 - tileY0;
 				var mesh = CreateMesh(xcount, ycount, "All Tiles Mesh");
+				mesh.hideFlags = HideFlags.None;
 				var materials = new Material[xcount * ycount];
-				for (int i = 0; i < materials.Length; ++i)
+				for (int j = 0; j < ycount; ++j)
 				{
-					materials[i] = new Material(material);
-					materials[i].name = materials[i].name + "(Clone)";
-					materials[i].hideFlags = HideFlags.DontSave;
-					materials[i].SetTexture(ID_MainTex, textures[i]);
+					for (int i = 0; i < xcount; ++i)
+					{
+						var index = i + j * xcount;
+						materials[index] = new Material(material);
+						materials[index].name = material.name + "(Clone)";
+						materials[index].SetTexture(ID_MainTex, tileProvider.GetTile(i, j));
+					}
 				}
 
 				var meshRenderer = allTilesMeshObj.AddComponent<MeshRenderer>();
-				meshRenderer.hideFlags = HideFlags.DontSave;
 				meshRenderer.sharedMaterials = materials;
 
 				var meshFilter = allTilesMeshObj.AddComponent<MeshFilter>();
-				meshFilter.hideFlags = HideFlags.DontSave;
 				meshFilter.sharedMesh = mesh;
 			}
 		}
@@ -127,8 +128,8 @@ namespace scene
 		{
 			Debug.Assert(visibleTileXCount > 0 && visibleTileXCount > 0);
 			Debug.Assert(material != null);
-			meshTileXCount = visibleTileXCount + 1;
-			meshTileYCount = visibleTileYCount + 1;
+			meshTileXCount = visibleTileXCount;
+			meshTileYCount = visibleTileYCount;
 
 			if (meshObj != null)
 			{
@@ -165,13 +166,24 @@ namespace scene
 			ID_MainTex = Shader.PropertyToID("_MainTex");
 		}
 
-		void Start()
+
+		int tileXCount, tileYCount;
+
+		bool CheckCreateMeshAndMaterial()
 		{
 			int tileX0, tileY0, tileX1, tileY1;
 			GetTileParams(out tileX0, out tileY0, out tileX1, out tileY1);
-			CreateMeshAndMaterial(tileX1 - tileX0, tileY1 - tileY0);
+			var xcount = tileX1 - tileX0;
+			var ycount = tileY1 - tileY0;
+			if (tileXCount < xcount || tileYCount < ycount)
+			{
+				tileXCount = xcount;
+				tileYCount = ycount;
+				CreateMeshAndMaterial(tileXCount, tileYCount);
+				return true;
+			}
+			return false;
 		}
-
 
 		void GetProjParams(Camera c, out Vector3 wCamMinOnPlane, out Vector3 wCamMaxOnPlane)
 		{
@@ -265,8 +277,17 @@ namespace scene
 		int observingTileX0 = int.MinValue, observingTileY0 = int.MinValue;
 		void LateUpdate()
 		{
+			var c = cam;
+			if (c == null)
+			{
+				c = Camera.main;
+			}
+			if (c == null) return;
+
 			if (tileProvider != null)
 			{
+				var d = CheckCreateMeshAndMaterial();
+
 				if (tileProvider.showAllTiles)
 				{
 					if (allTilesMeshObj == null)
@@ -291,7 +312,7 @@ namespace scene
 
 					int tileX0, tileY0, tileX1, tileY1;
 					GetTileParams(out tileX0, out tileY0, out tileX1, out tileY1);
-					if (tileX0 != observingTileX0 || tileY0 != observingTileY0)
+					if (d || (tileX0 != observingTileX0 || tileY0 != observingTileY0))
 					{
 						observingTileX0 = tileX0;
 						observingTileY0 = tileY0;
