@@ -1,0 +1,3 @@
+[submodule "Assets/Unity3D.Scene"]
+	path = Assets/Unity3D.Scene
+	url = git@github.com:xiaobin83/Unity3D.Scene.git
