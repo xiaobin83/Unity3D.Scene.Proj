@@ -32,3 +32,4 @@ sysinfo.txt
 *.unitypackage
 
 Library/
+.vs/
